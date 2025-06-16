@@ -1,58 +1,80 @@
-resource "aws_lb" "aws_lb" {
-  name = "app-alb-${var.environment}"
-  internal = false
+resource "aws_lb" "shared_alb" {
+  name               = "shared-${var.environment}-alb"
+  internal           = false
   load_balancer_type = "application"
-  security_groups = var.alb_security_group_ids
-  subnets = var.public_subnet_ids
+  security_groups    = [var.alb_security_group_id]
+  subnets            = var.public_subnet_ids
 
-  enable_deletion_protection = false
-   tags = {
-    Name      = "app-alb-${var.environment}"
-    ManagedBy = "Terraform"
+  enable_deletion_protection = var.environment == "prod" ? true : false
+
+  tags = {
+    Name        = "shared-${var.environment}-alb"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
   }
 }
 
-resource "aws_lb_target_group" "this" {
-  name     = "tg-${var.environment}"
-  port     = var.target_group_port
+resource "aws_lb_target_group" "backend_prod" {
+  name     = "backend-prod-tg"
+  port     = 5000
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
   health_check {
-    path                = var.health_check_path
-    protocol            = "HTTP"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
+    path = "/health"
+    port = "5000"
   }
-   tags = {
-    Name      = "tg-${var.environment}"
-    ManagedBy = "Terraform"
+
+  tags = {
+    Environment = "prod"
   }
 }
 
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn
-  port              = 80
-  protocol          = "HTTP"
+resource "aws_lb_target_group" "backend_staging" {
+  name     = "backend-staging-tg"
+  port     = 5000
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
 
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+  health_check {
+    path = "/health"
+    port = "5000"
+  }
+
+  tags = {
+    Environment = "staging"
   }
 }
 
-resource "aws_lb_listener" "https" {
-  count             = var.acm_certificate_arn != "" ? 1 : 0
-  load_balancer_arn = aws_lb.this.arn
-  port              = 443
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = var.acm_certificate_arn
 
-  default_action {
+resource "aws_lb_listener_rule" "prod_rule" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 10
+
+  action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+    target_group_arn = aws_lb_target_group.backend_prod.arn
+  }
+
+  condition {
+    host_header {
+      values = ["api.615915.xyz"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "staging_rule" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 20
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend_staging.arn
+  }
+
+  condition {
+    host_header {
+      values = ["api-staging.615915.xyz"]
+    }
   }
 }

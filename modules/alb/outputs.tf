@@ -1,20 +1,22 @@
-output "alb_arn" {
-  description = "ARN of the ALB"
-  value       = aws_lb.this.arn
-}
-
 output "alb_dns_name" {
   description = "DNS name of the ALB"
-  value       = aws_lb.this.dns_name
+  value       = aws_lb.shared_alb.dns_name
 }
 
-output "target_group_arn" {
-  description = "ARN of the target group"
-  value       = aws_lb_target_group.this.arn
+output "prod_tg_arn" {
+  value = aws_lb_target_group.backend_prod.arn
+}
+output "staging_tg_arn" {
+  value = aws_lb_target_group.backend_staging.arn
 }
 
-output "listener_http_arn" {
-  value       = aws_lb_listener.http.arn
-  description = "ARN of the HTTP listener"
+
+output "alb_arn" {
+  description = "ARN of the ALB"
+  value       = aws_lb.shared_alb.arn
 }
 
+output "alb_zone_id" {
+  description = "Route 53 zone ID of the ALB"
+  value       = aws_lb.shared_alb.zone_id
+}

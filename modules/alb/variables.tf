@@ -1,37 +1,28 @@
 variable "environment" {
- description = "environemnt name"
- type=string 
+  description = "Environment (staging|prod)"
+  type        = string
+  validation {
+    condition     = contains(["staging", "prod"], var.environment)
+    error_message = "Must be 'staging' or 'prod'."
+  }
 }
 
 variable "vpc_id" {
-  description = "VPC ID where the ALB is deployed"
-  type = string
+  description = "VPC ID where ALB will be deployed"
+  type        = string
 }
 
 variable "public_subnet_ids" {
-  description = "List of public subnet IDS"
-  type = list(string)
-}
-
-variable "alb_security_group_ids" {
-  description = "List of security group IDs for the ALB"
+  description = "List of public subnet IDs for ALB"
   type        = list(string)
 }
 
-variable "target_group_port" {
-   description = "Port for the target group (typically 80)"
-  type        = number
-  default     = 80
-}
-
-variable "health_check_path" {
-  description = "Health check path for target group"
+variable "alb_security_group_id" {
+  description = "Security Group ID for ALB"
   type        = string
-  default     = "/"
 }
 
 variable "acm_certificate_arn" {
-  description = "ACM certificate ARN for HTTPS listener"
+  description = "ARN of ACM certificate for HTTPS (must cover both staging/prod domains)"
   type        = string
-  default     = ""
 }
