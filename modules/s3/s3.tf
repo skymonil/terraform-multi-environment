@@ -1,0 +1,83 @@
+provider "aws" {
+  region = "ap-south-1"
+}
+
+resource "aws_s3_bucket" "frontend" {
+  bucket = var.bucket_name
+  force_destroy = true
+
+  tags = {
+    Name        = "${var.bucket_name}-${var.environment}"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_s3_bucket_website_configuration" "frontend_website" {
+  bucket = aws_s3_bucket.frontend.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+
+
+
+
+
+
+resource "aws_s3_bucket_policy" "allow_cf_only" {
+  bucket = aws_s3_bucket.frontend.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid: "AllowCloudFrontServicePrincipal",
+        Effect: "Allow",
+        Principal: {
+          Service: "cloudfront.amazonaws.com"
+        },
+        Action: "s3:GetObject",
+        Resource: "${aws_s3_bucket.frontend.arn}/*",
+        Condition: {
+          StringEquals: {
+            "AWS:SourceArn": aws_cloudfront_distribution.frontend_cf.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+
+# resource "local_file" "env_js" {
+#   content = <<EOF
+# window._env_ = {
+#   BACKEND_URL: "${api-}"
+# };
+# EOF
+
+#   filename = "${path.module}/dist/env.js"
+# }
+# resource "aws_s3_object" "env_js" {
+#   bucket = aws_s3_bucket.frontend-bucket.id
+#   key    = "env.js"
+#   source = local_file.env_js.filename
+#   content_type = "application/javascript"
+#  # acl    = "public-read"
+# }
+
