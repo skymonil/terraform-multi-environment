@@ -1,4 +1,4 @@
-resource "aws_launch_template" "this" {
+resource "aws_launch_template" "launch_template" {
   name_prefix   = "${var.app_name}-${var.environment}-lt"
   image_id      = var.ami_id
   instance_type = var.instance_type
@@ -25,7 +25,7 @@ resource "aws_launch_template" "this" {
   }
 }
 
-resource "aws_autoscaling_group" "this" {
+resource "aws_autoscaling_group" "autoscaling_group" {
   name                      = "${var.app_name}-${var.environment}-asg"
   desired_capacity          = var.desired_capacity
   max_size                  = var.max_size
