@@ -12,8 +12,14 @@ variable "enable_nat" {
   default = false
 }
 
+variable "region" {
+  type        = string
+  description = "AWS region"
+}
+
 variable "enable_private_subnets" {
   description = "Deploy resources in private"
+  type = bool
   default = false
 }
 
@@ -30,7 +36,9 @@ variable "availability_zones" {
 
 variable "public_subnet_cidrs" {
   description = "CIDR blocks for public subnets (must match AZ count)"
-  type = list(string)               
+  type = list(string)  
+   
+             
      validation {
        condition = length(var.public_subnet_cidrs) == length(var.availability_zones)
        error_message = "Public subnet CIDRs must match AZ count"
@@ -40,10 +48,15 @@ variable "public_subnet_cidrs" {
 variable "private_subnet_cidrs" {
   description = "CIDR blocks for private subnets"
   type = list(string) 
-  validation {
-       condition = length(var.private_subnet_cidrs) == length(var.availability_zones)
-       error_message = "Private subnet CIDRs must match AZ count"
-     }                  
+   default     = []
+ validation {
+    condition = (
+      var.enable_private_subnets == false || 
+      length(var.private_subnet_cidrs) == length(var.availability_zones)
+    )
+    error_message = "Private subnet CIDRs must match AZ count when private subnets are enabled."
+  }
+           
 }
 
 variable "vpc_name" {
@@ -56,15 +69,15 @@ variable "vpc_name" {
   }
 }
 
-variable "subnet_name" {
-  description = "Base Name for the subnets"
-  type = string
-   validation {
-    condition     = length(var.subnet_name) > 0
-    error_message = "Subnet base name must not be empty."
-  }
+# variable "subnet_name" {
+#   description = "Base Name for the subnets"
+#   type = string
+#    validation {
+#     condition     = length(var.subnet_name) > 0
+#     error_message = "Subnet base name must not be empty."
+#   }
   
-}
+# }
 
 variable "environment" {
   description = "Deployment environment (e.g. dev, staging, prod)"

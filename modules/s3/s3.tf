@@ -34,6 +34,17 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_object" "env_js" {
+  bucket = var.bucket_name
+  key    = "env.js"
+  content = templatefile("${path.module}/env.js.tmpl", {
+    BACKEND_URL = var.environment == "prod" ? "https://api.615915.xyz" : "https://api-staging.615915.xyz"
+  })
+
+  content_type = "application/javascript"
+depends_on = [aws_s3_bucket.frontend ]
+}
+
 
 
 

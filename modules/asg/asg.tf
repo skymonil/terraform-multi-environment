@@ -4,12 +4,12 @@ resource "aws_launch_template" "launch_template" {
   instance_type = var.instance_type
 
   iam_instance_profile {
-    name = var.instance_profile_name
+    name = aws_iam_instance_profile.ec2_profile.name
   }
 
   vpc_security_group_ids = var.security_group_ids
 
-  user_data = base64encode(var.user_data)
+user_data = base64encode(file("${path.module}/userdata.sh"))
 
   lifecycle {
     create_before_destroy = true
@@ -35,7 +35,7 @@ resource "aws_autoscaling_group" "autoscaling_group" {
   health_check_grace_period = 300
 
   launch_template {
-    id      = aws_launch_template.this.id
+    id      = aws_launch_template.launch_template.id
     version = "$Latest"
   }
 

@@ -1,20 +1,37 @@
-resource "aws_cloudfront_origin_access_identity" "oai" {
-  comment = "OAI for ${var.environment} CDN"
+resource "aws_cloudfront_origin_access_control" "s3_oac" {
+  name                              = "${var.environment}-oac"
+  description                       = "OAC for ${var.environment} S3 access"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
+
 resource "aws_cloudfront_distribution" "cdn" {
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+  }
+
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+  }
+
+
   enabled             = true
   aliases             = [var.domain_alias]
   default_root_object = "index.html"
 
-  origin {
-    domain_name = var.s3_bucket_regional_domain_name
-    origin_id   = "s3-origin"
+ origin {
+  domain_name = var.s3_bucket_regional_domain_name
+  origin_id   = "s3-origin"
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
-    }
-  }
+  origin_access_control_id = aws_cloudfront_origin_access_control.s3_oac.id
+}
+
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -55,16 +72,23 @@ resource "aws_cloudfront_distribution" "cdn" {
 # Update S3 bucket policy to allow only CloudFront access
 resource "aws_s3_bucket_policy" "cdn_access" {
   bucket = var.s3_bucket_id
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Effect    = "Allow",
+        Sid       = "AllowCloudFrontServicePrincipalReadOnly"
+        Effect    = "Allow"
         Principal = {
-          AWS = aws_cloudfront_origin_access_identity.oai.iam_arn
-        },
-        Action    = "s3:GetObject",
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action    = ["s3:GetObject"]
         Resource  = "${var.s3_bucket_arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.cdn.arn
+          }
+        }
       }
     ]
   })

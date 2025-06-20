@@ -13,7 +13,3 @@ output "cloudfront_distribution_arn" {
   value       = aws_cloudfront_distribution.cdn.arn
 }
 
-output "oai_iam_arn" {
-  description = "IAM ARN of the Origin Access Identity"
-  value       = aws_cloudfront_origin_access_identity.oai.iam_arn
-}

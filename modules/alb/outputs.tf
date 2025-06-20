@@ -3,12 +3,7 @@ output "alb_dns_name" {
   value       = aws_lb.shared_alb.dns_name
 }
 
-output "prod_tg_arn" {
-  value = aws_lb_target_group.backend_prod.arn
-}
-output "staging_tg_arn" {
-  value = aws_lb_target_group.backend_staging.arn
-}
+
 
 
 output "alb_arn" {
@@ -20,3 +15,15 @@ output "alb_zone_id" {
   description = "Route 53 zone ID of the ALB"
   value       = aws_lb.shared_alb.zone_id
 }
+
+
+
+output "alb_listener_arn" {
+  value = aws_lb_listener.https.arn
+}
+
+output "alb_target_sg_id" {
+  value = aws_security_group.alb_sg.id
+}
+
+

@@ -18,10 +18,7 @@ variable "instance_type" {
   type        = string
 }
 
-variable "instance_profile_name" {
-  description = "IAM Instance Profile name for EC2"
-  type        = string
-}
+
 
 variable "security_group_ids" {
   description = "List of security group IDs"
@@ -53,7 +50,18 @@ variable "desired_capacity" {
   type        = number
 }
 
-variable "user_data" {
-  description = "User data script for EC2 instance"
+
+
+
+
+variable "HCP_CLIENT_ID" {
   type        = string
+  description = "Client ID for HCP"
+  sensitive   = true
+}
+
+variable "HCP_CLIENT_SECRET" {
+  type        = string
+  description = "Client Secret for HCP"
+  sensitive   = true
 }

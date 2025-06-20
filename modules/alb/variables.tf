@@ -17,12 +17,9 @@ variable "public_subnet_ids" {
   type        = list(string)
 }
 
-variable "alb_security_group_id" {
-  description = "Security Group ID for ALB"
-  type        = string
-}
 
-variable "acm_certificate_arn" {
+
+variable "alb_acm_certificate_arn" {
   description = "ARN of ACM certificate for HTTPS (must cover both staging/prod domains)"
   type        = string
 }

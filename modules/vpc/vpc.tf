@@ -16,14 +16,14 @@ resource "aws_internet_gateway" "internet_gateway" {
 
 resource "aws_subnet" "public_subnets" {
 vpc_id = aws_vpc.main.id  
-count = 2
+count = length(var.availability_zones)
 cidr_block = var.public_subnet_cidrs[count.index]
 availability_zone = var.availability_zones[count.index]
 map_public_ip_on_launch = true
 
-tags= {
-    Name = "${var.subnet_name}-public-${count.index}-${var.environment}"
-      ManagedBy = "Terraform"
+tags = {
+  Name = "public-${var.region}-${var.availability_zones[count.index]}-${var.environment}"
+  ManagedBy = "Terraform"
 }
 
 
@@ -37,10 +37,10 @@ resource "aws_subnet" "private_subnets" {
   cidr_block        = var.private_subnet_cidrs[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  tags = {
-    Name      = "${var.subnet_name}-private-${count.index}-${var.environment}"
-    ManagedBy = "Terraform"
-  }
+ tags = {
+ Name = "private-${var.region}-${var.availability_zones[count.index]}-${var.environment}"
+  ManagedBy = "Terraform"
+}
 }
 
 resource "aws_route_table" "public_route_table" {
@@ -72,16 +72,17 @@ resource "aws_route_table" "private_route_table" {
 }
 
 resource "aws_route_table_association" "public_route_table_associations" {
-  count = 2
+  count = length(var.availability_zones)
   subnet_id = element(aws_subnet.public_subnets[*].id,count.index)
   route_table_id = aws_route_table.public_route_table.id
 }
 
 resource "aws_route_table_association" "private_route_table_associations" {
-  count = 2
+ count = var.enable_private_subnets ? length(var.availability_zones) : 0
 
-  subnet_id      = element(aws_subnet.private_subnets[*].id, count.index)
+  subnet_id      = aws_subnet.private_subnets[count.index].id
   route_table_id = aws_route_table.private_route_table[count.index].id
+
 }
 
 resource "aws_eip" "eip_natgw" {
